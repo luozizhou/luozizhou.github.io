@@ -1,6 +1,6 @@
 [Link to my university personal webpage](https://www.sheffield.ac.uk/economics/postgraduate/phd/students/zizhou-luo)
 
-{% include vimeoPlayerBath.html id=297101250}
+{% include vimeoPlayer.html id=297101250?h=a62b944b38&color=4ED5E8&byline=0}
 
 ## Profile
 
