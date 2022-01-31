@@ -1,5 +1,5 @@
 ---
-vimeoId: https://player.vimeo.com/video/297101250
+vimeoId: 297101250
 ---
 
 [Link to my university personal webpage](https://www.sheffield.ac.uk/economics/postgraduate/phd/students/zizhou-luo)
