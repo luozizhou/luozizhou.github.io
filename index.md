@@ -6,28 +6,33 @@ vimeoId: 297101250?embedded=true&source=video_title&owner=24707595
 
 ---
 
-[Link to my university personal webpage](https://www.sheffield.ac.uk/economics/postgraduate/phd/students/zizhou-luo)
+[Link to my university personal webpage]([https://www.sheffield.ac.uk/economics/postgraduate/phd/students/zizhou-luo](https://www.sheffield.ac.uk/economics/postgraduate/phd/students/zizhou-luo)) 
+[Link to my job market webpage](https://www.sheffield.ac.uk/economics/postgraduate/phd/postgraduate-job-market/zizhou-luo)
 
 ## Profile
 
-Zizhou is currently a doctoral candidate at the University of Sheffield (Sheffield, UK) and a member of Sheffield Household Finance Research Group. His empirical research of household finance uses Chinese representative house-hold level data from different datasets.
+Zizhou obtained his Bachelor's degree of Economics in Finance from Sichuan University (Chengdu, China) in 2017. Afterwards, he received MSc Applied Economics with Banking and Financial Markets from the University of Bath (Bath, UK) in 2018. Zizhou is currently a doctoral candidate at the University of Sheffield (Sheffield, UK) and a member of Sheffield Household Finance Research Group. His empirical research of household finance uses Chinese representative household-level data from different datasets.
 
 ## Education
 
-- 2019.09 - 2023.09 (Expected) Economics, Department of Economics, University of Sheffield, Sheffield, UK
-- 2017.09 - 2018.12 MSc Applied Economics with Banking and Financial Markets, Department of Economics, University of Bath, Bath, UK
-- 2013.09 - 2017.06 Bachelor of Economics in Finance, School of Economics, Sichuan University, Chengdu, China
+- 2019.09 - 2023.09 (Expected) Economics, Department of Economics, University of Sheffield, Sheffield, UK 
+- 2017.09 - 2018.12 MSc Applied Economics with Banking and Financial Markets, Department of Economics, University of Bath, Bath, UK 
+- 2013.09 - 2017.06 Bachelor of Economics in Finance, School of Economics, Sichuan University, Chengdu, China 
 
 ## Teaching
 
+Tutorial of the Academic Year 2022-2023
+- ECN21004 Econometrics (Stata computer labs and tutorials) 
+- ECN21007 Statistics and Econometrics (Stata computer labs and tutorials) 
+
 Tutorial of the Academic Year 2021 - 2022
-- ECN118 Mathematical Methods for Economics 1 (online and in person)
-- ECN21007 Statistics and Econometrics (online and in person)
-- ECN602 Applied Macroeconometrics (Computer  Labs)
+- ECN118 Mathematical Methods for Economics 1 (tutorials, online and in person)
+- ECN21007 Statistics and Econometrics (tutorials, online and in person)
+- ECN602 Applied Macroeconometrics (Stata computer labs) 
 
 Tutorial of the Academic Year 2020 - 2021
-- ECN219/ECN309 Research Methods and Introductory Econometrics (Stata Computer Labs)
+- ECN219/ECN309 Research Methods and Introductory Econometrics (Stata computer labs)
 - ECN130 Economic Analysis and Policy
 
 Tutorial of the Academic Year 2019 - 2020
-- ECN119 Mathematical Methods for Economics 2
+- ECN119 Mathematical Methods for Economics 2 
