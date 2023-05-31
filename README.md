@@ -1,4 +1,4 @@
-# Zizhou Luo GitHub Personal Website 
+# GitHub Personal Website 
 
 The GitHub Page theme called minimal is used here. See details via the [link](https://github.com/pages-themes/minimal). 
 
