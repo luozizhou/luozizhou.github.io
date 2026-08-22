@@ -1,4 +1,5 @@
 ---
+import Icon from './Icon.astro';
 const links = [
   { href: '/', label: 'Home' },
   { href: '/notes/', label: 'Notes' },
@@ -31,7 +32,10 @@ const path = Astro.url.pathname;
           </a>
         ))
       }
-      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" type="button">�</button>
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" type="button">
+        <Icon name="sun" class="ic-sun" size={20} />
+        <Icon name="moon" class="ic-moon" size={20} />
+      </button>
     </nav>
   </div>
 </header>

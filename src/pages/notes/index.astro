@@ -5,13 +5,21 @@ const entries = Object.entries(
   import.meta.glob('./*.mdx', { eager: true })
 ) as [string, any][];
 const notes = entries
-  .map(([p, m]) => ({
-    title: m.frontmatter?.title || p.split('/').pop().replace(/\.mdx$/, ''),
-    date: m.frontmatter?.date || '',
-    desc: m.frontmatter?.description || '',
-    url: p.replace('./', '/notes/').replace(/\.mdx$/, '/'),
-  }))
-  .sort((a, b) => (a.date < b.date ? 1 : -1));
+  .map(([p, m]) => {
+    const raw = m.frontmatter?.date;
+    const d = raw ? (raw instanceof Date ? raw : new Date(raw)) : null;
+    const date = d && !isNaN(d.getTime())
+      ? d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+      : '';
+    return {
+      title: m.frontmatter?.title || p.split('/').pop().replace(/\.mdx$/, ''),
+      raw: raw || '',
+      date,
+      desc: m.frontmatter?.description || '',
+      url: p.replace('./', '/notes/').replace(/\.mdx$/, '/'),
+    };
+  })
+  .sort((a, b) => (a.raw < b.raw ? 1 : -1));
 ---
 
 <Base title="Notes · Johnson's notes" description="Notes and reading">

@@ -123,9 +123,19 @@ img { max-width: 100%; display: block; }
   cursor: pointer;
   font-size: 1rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: transform 0.18s ease, background 0.18s ease;
 }
 .theme-toggle:hover { transform: scale(1.08); background: var(--bg-soft); }
+.icon { display: inline-flex; vertical-align: middle; }
+/* theme toggle: show moon in light mode, sun in dark mode */
+.theme-toggle .icon { display: none; }
+.theme-toggle .ic-moon { display: block; }
+:root[data-theme="dark"] .theme-toggle .ic-moon { display: none; }
+:root[data-theme="dark"] .theme-toggle .ic-sun { display: block; }
+.post-date { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; color: var(--text-faint); font-size: 0.9rem; }
 
 /* ---------- Layout primitives ---------- */
 main.container { padding-top: 48px; padding-bottom: 72px; min-height: 70vh; }
@@ -232,7 +242,7 @@ main.container { padding-top: 48px; padding-bottom: 72px; min-height: 70vh; }
   flex-direction: column;
 }
 .card:hover { transform: translateY(-4px); box-shadow: var(--shadow-lg); border-color: color-mix(in srgb, var(--accent) 40%, var(--border)); }
-.card .ico { font-size: 1.6rem; margin-bottom: 10px; }
+.card .ico { margin-bottom: 10px; color: var(--accent); display: flex; }
 .card h3 { margin: 0 0 8px; font-size: 1.15rem; }
 .card p { margin: 0 0 14px; color: var(--text-soft); font-size: 0.95rem; flex: 1; }
 .card .more { font-weight: 600; font-size: 0.9rem; }

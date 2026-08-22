@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import PyodideRunner from '../components/PyodideRunner.astro';
+import Icon from '../components/Icon.astro';
 
 const noteEntries = Object.entries(
   import.meta.glob('./notes/*.mdx', { eager: true })
@@ -15,10 +16,10 @@ const notes = noteEntries
   .slice(0, 4);
 
 const features = [
-  { ico: '�', title: 'Notes & Docs', desc: 'Reading notes and technical write-ups in Markdown / MDX, with code highlighting and math.', link: '/notes/' },
-  { ico: '�', title: 'Data Analysis', desc: 'Run Python right in the browser (Pyodide)  numpy / matplotlib plots, no server required.', link: '/analysis/' },
-  { ico: '�', title: 'Photos', desc: 'A lightweight gallery with click-to-zoom. Drop images into a folder and they build automatically.', link: '/photos/' },
-  { ico: '�', title: 'Interactive Code', desc: 'Runnable code examples and visualizations you can read and execute.', link: '/analysis/' },
+  { icon: 'notes', title: 'Notes & Docs', desc: 'Reading notes and technical write-ups in Markdown / MDX, with code highlighting and math.', link: '/notes/' },
+  { icon: 'chart', title: 'Data Analysis', desc: 'Run Python right in the browser (Pyodide) — numpy / matplotlib plots, no server required.', link: '/analysis/' },
+  { icon: 'image', title: 'Photos', desc: 'A lightweight gallery with click-to-zoom. Drop images into a folder and they build automatically.', link: '/photos/' },
+  { icon: 'code', title: 'Interactive Code', desc: 'Runnable code examples and visualizations you can read and execute.', link: '/analysis/' },
 ];
 ---
 
@@ -48,7 +49,7 @@ const features = [
       {
         features.map((f) => (
           <a class="card" href={f.link} style="color:inherit">
-            <div class="ico">{f.ico}</div>
+            <div class="ico"><Icon name={f.icon} size={28} /></div>
             <h3>{f.title}</h3>
             <p>{f.desc}</p>
             <span class="more">Learn more </span>
