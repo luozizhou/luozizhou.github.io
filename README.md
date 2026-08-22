@@ -1,4 +1,4 @@
-# Notes & Code
+# Johnson's notes
 
 A content-first website built with **Astro**, deployed to GitHub Pages. It shares notes,
 data-analysis experiments, and interactive code  everything is static and runs in the browser.
