@@ -1,0 +1,24 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+---
+
+<Base title="Tools · Johnson's notes" description="Interactive, browser-only tools.">
+  <div class="page-head">
+    <h1>Tools</h1>
+    <p>Interactive tools that run entirely in your browser — no backend, no tracking.</p>
+  </div>
+
+  <div class="grid">
+    <a class="card" href="/tools/cash-flow/" style="color:inherit">
+      <div class="ico"><Icon name="cash" size={28} /></div>
+      <h3>Cash Flow Charts</h3>
+      <p>
+        Model bond cash flows for China bond types: fixed-coupon, zero-coupon,
+        step-up, amortizing, and perpetual. Enter the parameters and see the
+        future coupons and principal in an interactive chart.
+      </p>
+      <span class="more">Open tool </span>
+    </a>
+  </div>
+</Base>

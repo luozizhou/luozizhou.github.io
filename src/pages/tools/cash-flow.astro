@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import CashFlowTool from '../../components/CashFlowTool.astro';
+---
+
+<Base
+  title="Cash Flow Charts · Johnson's notes"
+  description="Interactive cash flow charts for China bond types — fixed, zero-coupon, step-up, amortizing, perpetual."
+>
+  <div class="page-head">
+    <h1>Cash Flow Charts</h1>
+    <p>
+      Pick a bond template, enter the parameters you have, and see the future cash
+      flows — coupons and principal — in a clear interactive chart. Each template
+      reflects a real form of bond issued in China, and the panel below explains
+      its features.
+    </p>
+  </div>
+
+  <CashFlowTool />
+
+  <p class="disclaimer">
+    Educational tool only. Calculations are simplified and ignore taxes, defaults,
+    and optionality beyond what you enter (e.g. call features on non-perpetual
+    bonds). Not investment advice.
+  </p>
+</Base>

@@ -1,0 +1,419 @@
+---
+// Interactive Cash Flow Charts tool.
+// Renders bond-type templates (China-specific), a dynamic input form, a
+// Chart.js stacked cash-flow chart, summary stats, a cash-flow table and an
+// educational panel. Chart.js is loaded from CDN (UMD global) so no build-time
+// dependency is required.
+---
+
+<div class="cf-tool" id="cf-tool">
+  <div class="cf-templates" id="cf-templates" role="tablist" aria-label="Bond templates"></div>
+
+  <div class="cf-body">
+    <div class="cf-form-wrap">
+      <form id="cf-form" class="cf-form" autocomplete="off"></form>
+      <button type="button" id="cf-calc" class="cf-calc">Calculate cash flow</button>
+    </div>
+
+    <div class="cf-result">
+      <div class="cf-summary" id="cf-summary"></div>
+      <div class="cf-chart-wrap">
+        <canvas id="cf-chart"></canvas>
+      </div>
+      <div class="cf-table-wrap">
+        <table class="cf-table" id="cf-table"></table>
+      </div>
+    </div>
+  </div>
+
+  <div class="cf-edu" id="cf-edu"></div>
+</div>
+
+<script is:inline src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  // ---- Template definitions (real China bond forms) ----
+  const TEMPLATES = {
+    fixed: {
+      name: 'Fixed-Coupon Bond',
+      cn: '附息债券 · 记账式附息国债',
+      tag: '利率债 / 信用债',
+      desc: 'Pays a fixed coupon each period and repays principal at maturity — the most common bond form.',
+      edu: '附息债券按固定票面利率定期付息、到期还本，是最常见的债券形态。中国的记账式附息国债、政策性金融债（国开债、农发债、口行债）以及绝大多数信用债（企业债、公司债、中期票据）均采用此结构。现金流稳定、可预期，适合匹配固定负债；价格随市场利率反向波动。',
+      fields: [
+        { key: 'face', label: 'Face value (par)', type: 'number', def: 10000, step: 1000, min: 0 },
+        { key: 'rate', label: 'Annual coupon rate (%)', type: 'number', def: 3.0, step: 0.1 },
+        { key: 'years', label: 'Term (years)', type: 'number', def: 5, step: 1, min: 1 },
+        { key: 'freq', label: 'Coupons per year', type: 'select', options: [1, 2, 4], def: 1 },
+        { key: 'price', label: 'Purchase price (% of par)', type: 'number', def: 100, step: 0.5 },
+      ],
+    },
+    zero: {
+      name: 'Zero-Coupon Bond',
+      cn: '零息债券 · 贴现国债 / 央行票据 / 短期融资券',
+      tag: '贴现债',
+      desc: 'Issued at a discount, pays no coupons, repays face value at maturity — pure price appreciation.',
+      edu: '零息（贴现）债券发行时不附息票，以折价发行、到期按面值一次性偿付，持有期内不产生利息现金流。中国的贴现国债、中央银行票据、短期融资券（CP）均属此类。其买入价等于面值按收益率折现，收益率即隐含到期收益率；久期等于期限，对利率最敏感。',
+      fields: [
+        { key: 'face', label: 'Face value (par)', type: 'number', def: 10000, step: 1000, min: 0 },
+        { key: 'yield', label: 'Annual yield (%)', type: 'number', def: 2.5, step: 0.1 },
+        { key: 'years', label: 'Term (years)', type: 'number', def: 3, step: 0.5, min: 0.5 },
+      ],
+    },
+    step: {
+      name: 'Step-Up (Progressive) Bond',
+      cn: '递进利率债券 · 储蓄国债（电子式 / 凭证式）',
+      tag: '零售债',
+      desc: 'Coupon rises in tiers the longer you hold — rewards long-term holding.',
+      edu: '递进（阶梯）利率债券在存续期内分档提高票面利率，持有越久、票息越高，常用于鼓励长期持有。中国储蓄国债（电子式按年付息、凭证式到期付息）以及部分银行大额存单、少数金融债采用类似阶梯定价；结构上可视为票息随时间递增的附息债，兼顾稳定收益与流动性激励。',
+      fields: [
+        { key: 'face', label: 'Principal (par)', type: 'number', def: 10000, step: 1000, min: 0 },
+        { key: 'rate', label: 'Base annual rate (%)', type: 'number', def: 2.5, step: 0.1 },
+        { key: 'step', label: 'Rate step per tier (%)', type: 'number', def: 0.4, step: 0.1 },
+        { key: 'tierYears', label: 'Years per tier', type: 'number', def: 2, step: 1, min: 1 },
+        { key: 'years', label: 'Term (years)', type: 'number', def: 5, step: 1, min: 1 },
+        { key: 'freq', label: 'Coupons per year', type: 'select', options: [1, 2], def: 1 },
+        { key: 'price', label: 'Purchase price (% of par)', type: 'number', def: 100, step: 0.5 },
+      ],
+    },
+    amort: {
+      name: 'Amortizing Bond',
+      cn: '分期还本债券 · 部分地方债 / 企业债',
+      tag: '分期偿还',
+      desc: 'Repays principal in installments; interest is paid on the remaining balance.',
+      edu: '分期还本债券在到期前逐步偿还本金，每期现金流 = 当期利息（按剩余本金计）+ 当期本金偿还额，后期利息随之递减。中国部分地方债、企业债采用分期偿还安排，可降低发行人的集中兑付压力，也使投资者更早收回本金、降低信用风险敞口。',
+      fields: [
+        { key: 'face', label: 'Face value (par)', type: 'number', def: 10000, step: 1000, min: 0 },
+        { key: 'rate', label: 'Annual coupon rate (%)', type: 'number', def: 3.5, step: 0.1 },
+        { key: 'years', label: 'Term (years)', type: 'number', def: 5, step: 1, min: 1 },
+        { key: 'freq', label: 'Coupons per year', type: 'select', options: [1, 2, 4], def: 1 },
+        { key: 'price', label: 'Purchase price (% of par)', type: 'number', def: 100, step: 0.5 },
+      ],
+    },
+    perp: {
+      name: 'Perpetual Bond',
+      cn: '永续债 · 银行永续债 / 国企永续债',
+      tag: '资本债',
+      desc: 'No maturity; pays coupons forever (often with a call option). Principal returns only if called.',
+      edu: '永续债没有固定到期日，发行人持续付息、票息可递延（通常附利率跳升机制），除非行权赎回否则本金不偿还。中国的永续债多用于商业银行补充其他一级资本（银行永续债）及国企补充资本金。其现金流为“永续票息”，估值更依赖赎回条款与信用利差，久期长、利率敏感度高。',
+      fields: [
+        { key: 'face', label: 'Face value (par)', type: 'number', def: 10000, step: 1000, min: 0 },
+        { key: 'rate', label: 'Annual coupon rate (%)', type: 'number', def: 4.5, step: 0.1 },
+        { key: 'freq', label: 'Coupons per year', type: 'select', options: [1, 2], def: 1 },
+        { key: 'showYears', label: 'Years to display', type: 'number', def: 30, step: 1, min: 1 },
+        { key: 'call', label: 'Call after (years, 0 = never)', type: 'number', def: 5, step: 1, min: 0 },
+        { key: 'price', label: 'Purchase price (% of par)', type: 'number', def: 100, step: 0.5 },
+      ],
+    },
+  };
+
+  const num = (v, d) => {
+    const x = parseFloat(v);
+    return isFinite(x) ? x : d;
+  };
+  const fmtInt = (x) => Math.round(x).toLocaleString('en-US');
+  const fmtPct = (x) => (x * 100).toFixed(2) + '%';
+
+  // Continuously-compounded IRR from cash flows at times t (years).
+  function contIRR(tArr, cf, cost) {
+    const pts = [{ t: 0, cf: -cost }];
+    for (let i = 0; i < tArr.length; i++) pts.push({ t: tArr[i], cf: cf[i] });
+    let lo = -0.5, hi = 3;
+    const f = (y) => pts.reduce((s, p) => s + p.cf * Math.exp(-y * p.t), 0);
+    let fLo = f(lo);
+    if (fLo * f(hi) > 0) {
+      hi = 12;
+      if (fLo * f(hi) > 0) return null;
+    }
+    for (let k = 0; k < 200; k++) {
+      const mid = (lo + hi) / 2;
+      const fm = f(mid);
+      if (Math.abs(fm) < 1e-10) { lo = hi = mid; break; }
+      if (fLo * fm < 0) hi = mid;
+      else { lo = mid; fLo = fm; }
+    }
+    return Math.exp((lo + hi) / 2) - 1;
+  }
+
+  function compute(key, p) {
+    const out = { labels: [], t: [], coupon: [], principal: [], cum: [], currentCost: 0, perp: false, callYear: 0 };
+    let cum = 0;
+    if (key === 'fixed') {
+      const face = num(p.face, 10000), rate = num(p.rate, 3) / 100, years = num(p.years, 5);
+      const freq = parseInt(p.freq) || 1, price = num(p.price, 100);
+      const n = Math.max(1, Math.round(years * freq));
+      const c = (face * rate) / freq;
+      out.currentCost = (face * price) / 100;
+      for (let i = 1; i <= n; i++) {
+        const t = i / freq;
+        out.labels.push(freq === 1 ? 'Yr ' + i : 'Yr ' + t.toFixed(1));
+        out.t.push(t);
+        const pr = i === n ? face : 0;
+        out.coupon.push(c); out.principal.push(pr);
+        cum += c + pr; out.cum.push(cum);
+      }
+    } else if (key === 'zero') {
+      const face = num(p.face, 10000), y = num(p.yield, 2.5) / 100, years = num(p.years, 3);
+      const price = face / Math.pow(1 + y, years);
+      out.currentCost = price;
+      out.labels.push('Yr ' + years); out.t.push(years);
+      out.coupon.push(0); out.principal.push(face);
+      cum += face; out.cum.push(cum);
+    } else if (key === 'step') {
+      const face = num(p.face, 10000), base = num(p.rate, 2.5) / 100, step = num(p.step, 0.4) / 100;
+      const tierY = num(p.tierYears, 2), years = num(p.years, 5);
+      const freq = parseInt(p.freq) || 1, price = num(p.price, 100);
+      const n = Math.max(1, Math.round(years * freq));
+      const tierLen = Math.max(1, Math.round(tierY * freq));
+      out.currentCost = (face * price) / 100;
+      for (let i = 1; i <= n; i++) {
+        const tierIdx = Math.floor((i - 1) / tierLen);
+        const c = (face * (base + tierIdx * step)) / freq;
+        const t = i / freq;
+        out.labels.push(freq === 1 ? 'Yr ' + i : 'Yr ' + t.toFixed(1));
+        out.t.push(t);
+        const pr = i === n ? face : 0;
+        out.coupon.push(c); out.principal.push(pr);
+        cum += c + pr; out.cum.push(cum);
+      }
+    } else if (key === 'amort') {
+      const face = num(p.face, 10000), rate = num(p.rate, 3.5) / 100, years = num(p.years, 5);
+      const freq = parseInt(p.freq) || 1, price = num(p.price, 100);
+      const n = Math.max(1, Math.round(years * freq));
+      const prEach = face / n;
+      let rem = face;
+      out.currentCost = (face * price) / 100;
+      for (let i = 1; i <= n; i++) {
+        const c = (rem * rate) / freq;
+        rem -= prEach;
+        const t = i / freq;
+        out.labels.push(freq === 1 ? 'Yr ' + i : 'Yr ' + t.toFixed(1));
+        out.t.push(t);
+        out.coupon.push(c); out.principal.push(prEach);
+        cum += c + prEach; out.cum.push(cum);
+      }
+    } else if (key === 'perp') {
+      const face = num(p.face, 10000), rate = num(p.rate, 4.5) / 100;
+      const freq = parseInt(p.freq) || 1, showY = num(p.showYears, 30), callY = num(p.call, 0);
+      const n = Math.max(1, Math.round(showY * freq));
+      const c = (face * rate) / freq;
+      out.currentCost = (face * num(p.price, 100)) / 100;
+      out.perp = true; out.callYear = callY;
+      for (let i = 1; i <= n; i++) {
+        const t = i / freq;
+        let pr = 0;
+        if (callY > 0 && Math.abs(t - callY) < 1e-9) pr = face;
+        out.labels.push(freq === 1 ? 'Yr ' + i : 'Yr ' + t.toFixed(1));
+        out.t.push(t);
+        out.coupon.push(c); out.principal.push(pr);
+        cum += c + pr; out.cum.push(cum);
+      }
+    }
+    out.totalCoupon = out.coupon.reduce((a, b) => a + b, 0);
+    out.totalPrincipal = out.principal.reduce((a, b) => a + b, 0);
+    out.totalIn = out.totalCoupon + out.totalPrincipal;
+    out.net = out.totalIn - out.currentCost;
+    if (out.perp) {
+      out.yield = null;
+      out.currentYield = (num(p.face, 10000) * num(p.rate, 4.5) / 100) / out.currentCost;
+    } else {
+      out.yield = contIRR(out.t, out.coupon.map((c, i) => c + out.principal[i]), out.currentCost);
+      out.currentYield = null;
+    }
+    return out;
+  }
+
+  // ---- DOM refs ----
+  const templatesEl = document.getElementById('cf-templates');
+  const formEl = document.getElementById('cf-form');
+  const calcBtn = document.getElementById('cf-calc');
+  const summaryEl = document.getElementById('cf-summary');
+  const tableEl = document.getElementById('cf-table');
+  const eduEl = document.getElementById('cf-edu');
+  const canvas = document.getElementById('cf-chart');
+  let chart = null;
+  let activeKey = 'fixed';
+
+  function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+  function themeColors() {
+    return {
+      text: cssVar('--text'),
+      faint: cssVar('--text-faint'),
+      grid: cssVar('--border'),
+      accent: cssVar('--accent'),
+      accent2: cssVar('--accent-2'),
+    };
+  }
+
+  function renderTemplates() {
+    templatesEl.innerHTML = '';
+    Object.entries(TEMPLATES).forEach(([key, tpl]) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'cf-tpl' + (key === activeKey ? ' active' : '');
+      btn.setAttribute('role', 'tab');
+      btn.innerHTML =
+        '<div class="t-name">' + tpl.name + '</div>' +
+        '<div class="t-cn">' + tpl.cn + '</div>' +
+        '<p class="t-desc">' + tpl.desc + '</p>' +
+        '<span class="t-tag">' + tpl.tag + '</span>';
+      btn.addEventListener('click', () => {
+        activeKey = key;
+        document.querySelectorAll('.cf-tpl').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderForm();
+        update();
+      });
+      templatesEl.appendChild(btn);
+    });
+  }
+
+  function renderForm() {
+    const tpl = TEMPLATES[activeKey];
+    formEl.innerHTML = '';
+    tpl.fields.forEach((f) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'cf-field';
+      const lab = document.createElement('label');
+      lab.textContent = f.label;
+      lab.setAttribute('for', 'cf-' + f.key);
+      wrap.appendChild(lab);
+      let input;
+      if (f.type === 'select') {
+        input = document.createElement('select');
+        f.options.forEach((o) => {
+          const opt = document.createElement('option');
+          opt.value = o; opt.textContent = o;
+          if (o === f.def) opt.selected = true;
+          input.appendChild(opt);
+        });
+      } else {
+        input = document.createElement('input');
+        input.type = 'number';
+        input.value = f.def;
+        if (f.step) input.step = f.step;
+        if (f.min != null) input.min = f.min;
+      }
+      input.id = 'cf-' + f.key;
+      input.name = f.key;
+      input.addEventListener('input', update);
+      wrap.appendChild(input);
+      formEl.appendChild(wrap);
+    });
+  }
+
+  function readForm() {
+    const p = {};
+    TEMPLATES[activeKey].fields.forEach((f) => {
+      const el = document.getElementById('cf-' + f.key);
+      p[f.key] = el ? el.value : f.def;
+    });
+    return p;
+  }
+
+  function renderSummary(o) {
+    const cards = [
+      { label: 'Current cost (buy)', value: fmtInt(o.currentCost), accent: true },
+      { label: 'Total coupons', value: fmtInt(o.totalCoupon) },
+      { label: 'Principal repaid', value: fmtInt(o.totalPrincipal) },
+      { label: 'Total cash inflow', value: fmtInt(o.totalIn), accent: true },
+      { label: 'Net gain', value: fmtInt(o.net) },
+      {
+        label: 'Yield (IRR, eff.)',
+        value: o.perp ? (o.currentYield != null ? fmtPct(o.currentYield) + ' *' : 'N/A') : (o.yield != null ? fmtPct(o.yield) : 'N/A'),
+      },
+    ];
+    summaryEl.innerHTML = cards
+      .map((c) => '<div class="cf-stat"><div class="s-label">' + c.label + '</div><div class="s-value' + (c.accent ? ' accent' : '') + '">' + c.value + '</div></div>')
+      .join('');
+  }
+
+  function renderTable(o) {
+    let rows = '';
+    const maxRows = 15;
+    const showN = Math.min(o.labels.length, maxRows);
+    for (let i = 0; i < showN; i++) {
+      rows +=
+        '<tr><td>' + o.labels[i] + '</td><td>' + fmtInt(o.coupon[i]) + '</td><td>' +
+        fmtInt(o.principal[i]) + '</td><td>' + fmtInt(o.cum[i]) + '</td></tr>';
+    }
+    if (o.labels.length > maxRows) {
+      rows += '<tr><td colspan="4" style="text-align:center;color:var(--text-faint)">… ' +
+        (o.labels.length - maxRows) + ' more periods (see chart)</td></tr>';
+    }
+    tableEl.innerHTML =
+      '<thead><tr><th>Period</th><th>Coupon</th><th>Principal</th><th>Cumulative inflow</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>';
+  }
+
+  function renderEdu() {
+    const tpl = TEMPLATES[activeKey];
+    eduEl.innerHTML =
+      '<h3>' + tpl.name + '</h3>' +
+      '<div class="e-cn">' + tpl.cn + ' &middot; <span class="t-tag">' + tpl.tag + '</span></div>' +
+      '<p>' + tpl.edu + '</p>';
+  }
+
+  function drawChart(o) {
+    if (typeof window.Chart === 'undefined') {
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = cssVar('--text-faint');
+      ctx.font = '14px sans-serif';
+      ctx.fillText('Chart library failed to load (check your network).', 16, 30);
+      return;
+    }
+    const c = themeColors();
+    const cfg = {
+      type: 'bar',
+      data: {
+        labels: o.labels,
+        datasets: [
+          { label: 'Coupon income', data: o.coupon, backgroundColor: c.accent, stack: 'cf', borderRadius: 3 },
+          { label: 'Principal repayment', data: o.principal, backgroundColor: c.accent2, stack: 'cf', borderRadius: 3 },
+          { label: 'Cumulative inflow', data: o.cum, type: 'line', yAxisID: 'y1', borderColor: '#f59e0b', backgroundColor: '#f59e0b', borderWidth: 2, tension: 0.25, pointRadius: 2, fill: false },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        scales: {
+          x: { stacked: true, grid: { color: c.grid }, ticks: { color: c.faint }, title: { display: true, text: 'Time', color: c.faint } },
+          y: { stacked: true, grid: { color: c.grid }, ticks: { color: c.faint }, title: { display: true, text: 'Cash flow per period', color: c.faint } },
+          y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: c.faint }, title: { display: true, text: 'Cumulative inflow', color: c.faint } },
+        },
+        plugins: {
+          legend: { labels: { color: c.text, usePointStyle: true } },
+          tooltip: { callbacks: { label: (it) => it.dataset.label + ': ' + Math.round(it.parsed.y).toLocaleString('en-US') } },
+        },
+      },
+    };
+    if (chart) { chart.destroy(); }
+    chart = new window.Chart(canvas, cfg);
+  }
+
+  function update() {
+    const p = readForm();
+    const o = compute(activeKey, p);
+    renderSummary(o);
+    renderTable(o);
+    drawChart(o);
+  }
+
+  // ---- init ----
+  renderTemplates();
+  renderForm();
+  renderEdu();
+  update();
+  calcBtn.addEventListener('click', update);
+
+  // Re-color the chart when the theme toggles.
+  const obs = new MutationObserver(() => {
+    if (chart) drawChart(compute(activeKey, readForm()));
+  });
+  obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+})();
+</script>
