@@ -1,0 +1,42 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const entries = Object.entries(
+  import.meta.glob('./*.mdx', { eager: true })
+) as [string, any][];
+const notes = entries
+  .map(([p, m]) => ({
+    title: m.frontmatter?.title || p.split('/').pop().replace(/\.mdx$/, ''),
+    date: m.frontmatter?.date || '',
+    desc: m.frontmatter?.description || '',
+    url: p.replace('./', '/notes/').replace(/\.mdx$/, '/'),
+  }))
+  .sort((a, b) => (a.date < b.date ? 1 : -1));
+---
+
+<Base title="Notes  Notes & Code" description="Notes and reading">
+  <div class="page-head">
+    <h1>Notes</h1>
+    <p>Snippets of reading, tech, and life observations. Written in Markdown / MDX, with code and math support.</p>
+  </div>
+
+  {
+    notes.length > 0 ? (
+      <div class="post-list">
+        {notes.map((n) => (
+          <a class="post-row" href={n.url} style="color:inherit">
+            <div>
+              <div class="title">{n.title}</div>
+              {n.desc && <div style="color:var(--text-faint);font-size:.85rem">{n.desc}</div>}
+            </div>
+            <span class="meta">{n.date}</span>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <p style="color:var(--text-faint)">
+        Add an <code>.mdx</code> file under <code>src/pages/notes/</code> and it will appear here.
+      </p>
+    )
+  }
+</Base>

@@ -1,0 +1,70 @@
+---
+import Base from '../../layouts/Base.astro';
+import PyodideRunner from '../../components/PyodideRunner.astro';
+
+const codeStats = `import numpy as np
+rng = np.random.default_rng(42)
+data = rng.normal(loc=100, scale=15, size=1000)
+print("mean :", round(data.mean(), 2))
+print("std  :", round(data.std(), 2))
+print("min  :", round(data.min(), 2))
+print("max  :", round(data.max(), 2))
+print("median:", round(np.median(data), 2))`;
+
+const codeHist = `import numpy as np
+import matplotlib.pyplot as plt
+rng = np.random.default_rng(7)
+data = rng.normal(0, 1, 5000)
+plt.figure(figsize=(6, 3.4))
+plt.hist(data, bins=50, color="#4f46e5", alpha=0.8)
+plt.title("Standard normal distribution")
+plt.xlabel("value"); plt.ylabel("count")
+plt.grid(alpha=0.25)
+print("n:", len(data))`;
+
+const codeFit = `import numpy as np
+import matplotlib.pyplot as plt
+rng = np.random.default_rng(1)
+x = np.linspace(0, 10, 60)
+y = 2.4 * x + 5 + rng.normal(0, 6, len(x))
+# least squares
+A = np.vstack([x, np.ones_like(x)]).T
+k, b = np.linalg.lstsq(A, y, rcond=None)[0]
+plt.figure(figsize=(6, 3.4))
+plt.scatter(x, y, s=12, alpha=0.5, color="#06b6d4", label="data")
+plt.plot(x, k*x+b, color="#ef4444", linewidth=2, label="fit y=%.2fx+%.2f" % (k, b))
+plt.legend(); plt.grid(alpha=0.25)
+plt.title("Least squares fit")
+print("slope k =", round(k, 3), " intercept b =", round(b, 3))`;
+---
+
+<Base title="Data Analysis  Notes & Code" description="Run Python in the browser for data analysis and visualization">
+  <div class="page-head">
+    <h1>Data Analysis</h1>
+    <p>
+      Each code block below runs Python <strong>in your browser</strong> (Pyodide / WebAssembly),
+      with no server required. Edit the code and hit <strong>Run</strong> to see output and charts.
+    </p>
+  </div>
+
+  <section class="section">
+    <div class="section-head"><h2>Example 1: numpy descriptive stats</h2></div>
+    <PyodideRunner title="Descriptive statistics" code={codeStats} />
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Example 2: matplotlib visualization</h2></div>
+    <PyodideRunner title="Histogram" code={codeHist} />
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Example 3: scatter + fit</h2></div>
+    <PyodideRunner title="Linear regression demo" code={codeFit} />
+  </section>
+
+  <p style="color:var(--text-faint);font-size:.9rem">
+    Want to add your own analysis? Create a new <code>.astro</code> page under <code>src/pages/analysis/</code>
+    and drop in <code>&lt;PyodideRunner code=&#123;...&#125; /&gt;</code>. Need pandas? Call
+    <code>pyodide.loadPackage('pandas')</code> inside the runner.
+  </p>
+</Base>

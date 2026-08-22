@@ -1,0 +1,25 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+.astro
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.vscode/*
+.idea/*
+.DS_Store
+*.suo
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Agent workspace (local memory, not part of the site)
+.workbuddy/

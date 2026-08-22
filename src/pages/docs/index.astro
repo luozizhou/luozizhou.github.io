@@ -1,0 +1,42 @@
+---
+import Base from '../../layouts/Base.astro';
+
+const entries = Object.entries(
+  import.meta.glob('./*.mdx', { eager: true })
+) as [string, any][];
+const docs = entries
+  .map(([p, m]) => ({
+    title: m.frontmatter?.title || p.split('/').pop().replace(/\.mdx$/, ''),
+    date: m.frontmatter?.date || '',
+    desc: m.frontmatter?.description || '',
+    url: p.replace('./', '/docs/').replace(/\.mdx$/, '/'),
+  }))
+  .sort((a, b) => (a.date < b.date ? 1 : -1));
+---
+
+<Base title="Docs  Notes & Code" description="Tutorials and technical write-ups">
+  <div class="page-head">
+    <h1>Docs</h1>
+    <p>Longer tutorial / technical pieces, written in MDX with embedded code and components.</p>
+  </div>
+
+  {
+    docs.length > 0 ? (
+      <div class="post-list">
+        {docs.map((d) => (
+          <a class="post-row" href={d.url} style="color:inherit">
+            <div>
+              <div class="title">{d.title}</div>
+              {d.desc && <div style="color:var(--text-faint);font-size:.85rem">{d.desc}</div>}
+            </div>
+            <span class="meta">{d.date}</span>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <p style="color:var(--text-faint)">
+        Add an <code>.mdx</code> file under <code>src/pages/docs/</code> and it will appear here.
+      </p>
+    )
+  }
+</Base>

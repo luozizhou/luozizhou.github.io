@@ -1,0 +1,120 @@
+---
+interface Props {
+  title?: string;
+  code?: string;
+  height?: number;
+}
+const {
+  title = 'Interactive Python',
+  code = `import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 2 * np.pi, 200)
+y = np.sin(x) * np.exp(-0.1 * x)
+
+plt.figure(figsize=(6, 3.2))
+plt.plot(x, y, color="#4f46e5", linewidth=2, label="sin(x)e^(-x)")
+plt.title("Damped sine wave")
+plt.xlabel("x"); plt.ylabel("y")
+plt.legend(); plt.grid(alpha=0.3)
+print("peak:", round(float(y.max()), 3))`,
+  height = 200,
+} = Astro.props;
+---
+
+<div class="pyrunner" data-pyrunner>
+  <div class="pr-head">
+    <span class="lang">Python</span>
+    <span class="pr-title">{title}</span>
+  </div>
+  <textarea spellcheck="false" style={`min-height:${height}px`}>{code}</textarea>
+  <div class="pr-actions">
+    <button class="pr-run" type="button"> Run</button>
+    <span class="pr-status">Ready (first run loads the runtime)</span>
+  </div>
+  <div class="pr-out"></div>
+  <div class="pr-figs"></div>
+</div>
+
+<script>
+  const PYODIDE_VERSION = '0.26.4';
+  const INDEX = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
+  let _pyodidePromise: Promise<any> | null = null;
+
+  function loadPyodideOnce(status?: HTMLElement | null) {
+    if (!_pyodidePromise) {
+      if (status) status.textContent = 'Loading Python runtime';
+      _pyodidePromise = (async () => {
+        const mod = await import(/* @vite-ignore */ `${INDEX}pyodide.mjs`);
+        const pyodide = await mod.loadPyodide({ indexURL: INDEX });
+        if (status) status.textContent = 'Loading numpy / matplotlib';
+        await pyodide.loadPackage(['numpy', 'matplotlib']);
+        await pyodide.runPythonAsync(`
+import matplotlib
+matplotlib.use('AGG')
+import matplotlib.pyplot as plt
+`);
+        return pyodide;
+      })().catch((e) => {
+        _pyodidePromise = null;
+        throw e;
+      });
+    }
+    return _pyodidePromise;
+  }
+
+  document.querySelectorAll('[data-pyrunner]').forEach((el: HTMLElement) => {
+    const ta = el.querySelector('textarea') as HTMLTextAreaElement;
+    const runBtn = el.querySelector('.pr-run') as HTMLButtonElement;
+    const status = el.querySelector('.pr-status') as HTMLElement;
+    const out = el.querySelector('.pr-out') as HTMLElement;
+    const figs = el.querySelector('.pr-figs') as HTMLElement;
+
+    runBtn.addEventListener('click', async () => {
+      runBtn.disabled = true;
+      out.classList.remove('show');
+      out.textContent = '';
+      figs.innerHTML = '';
+      try {
+        const pyodide = await loadPyodideOnce(status);
+        status.textContent = 'Running';
+        const stdout: string[] = [];
+        pyodide.setStdout({ batched: (s: string) => stdout.push(s) });
+        await pyodide.runPythonAsync(ta.value);
+        pyodide.setStdout({});
+        const figB64: string[] = await pyodide.runPythonAsync(`
+import matplotlib.pyplot as plt, io, base64
+res = []
+for num in plt.get_fignums():
+    fig = plt.figure(num)
+    buf = io.BytesIO()
+    fig.savefig(buf, format='png', dpi=110, bbox_inches='tight')
+    buf.seek(0)
+    res.append(base64.b64encode(buf.read()).decode())
+plt.close('all')
+res
+`);
+        const text = stdout.join('');
+        if (text) {
+          out.textContent = text;
+          out.classList.add('show');
+        } else if (figB64.length === 0) {
+          out.textContent = '(no text output)';
+          out.classList.add('show');
+        }
+        figB64.forEach((b64) => {
+          const img = document.createElement('img');
+          img.src = 'data:image/png;base64,' + b64;
+          figs.appendChild(img);
+        });
+        status.textContent = 'Done';
+      } catch (e) {
+        out.textContent = String(e);
+        out.classList.add('show');
+        status.textContent = 'Error';
+      } finally {
+        runBtn.disabled = false;
+      }
+    });
+  });
+</script>

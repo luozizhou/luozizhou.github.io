@@ -1,0 +1,47 @@
+---
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/notes/', label: 'Notes' },
+  { href: '/analysis/', label: 'Analysis' },
+  { href: '/photos/', label: 'Photos' },
+  { href: '/docs/', label: 'Docs' },
+  { href: '/about/', label: 'About' },
+];
+const path = Astro.url.pathname;
+---
+
+<header class="site-header">
+  <div class="container nav-inner">
+    <a class="brand" href="/">Notes <span>&amp;</span> Code</a>
+    <nav class="site-nav" aria-label="Primary">
+      {
+        links.map((l) => (
+          <a
+            href={l.href}
+            class:list={[
+              'nav-link',
+              {
+                active:
+                  path === l.href ||
+                  (l.href !== '/' && path.startsWith(l.href)),
+              },
+            ]}
+          >
+            {l.label}
+          </a>
+        ))
+      }
+      <button id="theme-toggle" class="theme-toggle" aria-label="Toggle theme" type="button">ð</button>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const btn = document.getElementById('theme-toggle');
+  btn?.addEventListener('click', () => {
+    const cur = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+</script>

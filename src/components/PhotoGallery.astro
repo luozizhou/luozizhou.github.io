@@ -1,0 +1,68 @@
+---
+import { Image } from 'astro:assets';
+
+const photoModules = import.meta.glob('../assets/photos/*.{jpeg,jpg,png,webp,gif}', {
+  eager: true,
+});
+const photos = Object.entries(photoModules).map(([p, m]) => ({
+  src: (m as { default: ImageMetadata }).default,
+  name: p.split('/').pop()!.replace(/\.[^.]+$/, ''),
+}));
+
+const placeholders = [
+  'linear-gradient(135deg,#6366f1,#06b6d4)',
+  'linear-gradient(135deg,#f59e0b,#ef4444)',
+  'linear-gradient(135deg,#10b981,#3b82f6)',
+  'linear-gradient(135deg,#8b5cf6,#ec4899)',
+  'linear-gradient(135deg,#14b8a6,#6366f1)',
+  'linear-gradient(135deg,#f43f5e,#f59e0b)',
+];
+---
+
+{
+  photos.length > 0 ? (
+    <div class="gallery">
+      {photos.map((p) => (
+        <figure class="photo" data-cap={p.name}>
+          <Image src={p.src} alt={p.name} width={800} height={600} format="webp" />
+          <figcaption class="cap">{p.name}</figcaption>
+        </figure>
+      ))}
+    </div>
+  ) : (
+    <div class="gallery">
+      {placeholders.map((c) => (
+        <div class="photo" style={`background:${c}`}>
+          <div class="cap">Placeholder  drop photos into src/assets/photos/</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+<p style="color:var(--text-faint);font-size:.9rem;margin-top:16px">
+  Drop photos (jpg / png / webp) into <code>src/assets/photos/</code> and they will appear here after the next build, with click-to-zoom.
+</p>
+
+<div class="lightbox" id="lightbox">
+  <img alt="" />
+  <span class="lb-cap"></span>
+</div>
+
+<script>
+  const lb = document.getElementById('lightbox');
+  const lbImg = lb?.querySelector('img');
+  const lbCap = lb?.querySelector('.lb-cap');
+  document.querySelectorAll('.gallery .photo img').forEach((img) => {
+    img.addEventListener('click', () => {
+      const fig = img.closest('.photo') as HTMLElement | null;
+      if (lbImg) lbImg.src = (img as HTMLImageElement).src;
+      if (lbCap) lbCap.textContent = fig?.getAttribute('data-cap') || '';
+      lb?.classList.add('open');
+    });
+  });
+  lb?.addEventListener('click', () => lb?.classList.remove('open'));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') lb?.classList.remove('open');
+  });
+</script>

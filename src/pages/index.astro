@@ -1,0 +1,107 @@
+---
+import Base from '../layouts/Base.astro';
+import PyodideRunner from '../components/PyodideRunner.astro';
+
+const noteEntries = Object.entries(
+  import.meta.glob('./notes/*.mdx', { eager: true })
+) as [string, any][];
+const notes = noteEntries
+  .map(([p, m]) => ({
+    title: m.frontmatter?.title || p.split('/').pop().replace(/\.mdx$/, ''),
+    date: m.frontmatter?.date || '',
+    url: p.replace('./notes/', '/notes/').replace(/\.mdx$/, '/'),
+  }))
+  .sort((a, b) => (a.date < b.date ? 1 : -1))
+  .slice(0, 4);
+
+const features = [
+  { ico: 'ð', title: 'Notes & Docs', desc: 'Reading notes and technical write-ups in Markdown / MDX, with code highlighting and math.', link: '/notes/' },
+  { ico: 'ð', title: 'Data Analysis', desc: 'Run Python right in the browser (Pyodide)  numpy / matplotlib plots, no server required.', link: '/analysis/' },
+  { ico: 'ð', title: 'Photos', desc: 'A lightweight gallery with click-to-zoom. Drop images into a folder and they build automatically.', link: '/photos/' },
+  { ico: 'ð', title: 'Interactive Code', desc: 'Runnable code examples and visualizations you can read and execute.', link: '/analysis/' },
+];
+---
+
+<Base>
+  <section class="hero">
+    <p class="eyebrow">Notes  Code  Data</p>
+    <h1>Welcome to my space</h1>
+    <p>
+      A place to share notes, data-analysis experiments, and interactive code.
+      Everything here is static and runs in your browser  no backend, no tracking.
+    </p>
+    <div class="tags">
+      <span class="tag">Notes</span>
+      <span class="tag">Data Analysis</span>
+      <span class="tag">Python</span>
+      <span class="tag">Photography</span>
+    </div>
+    <div style="margin-top:24px;display:flex;gap:12px;flex-wrap:wrap">
+      <a class="btn btn-primary" href="/analysis/">Try interactive Python </a>
+      <a class="btn btn-ghost" href="/photos/">Browse photos</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>What's inside</h2></div>
+    <div class="grid">
+      {
+        features.map((f) => (
+          <a class="card" href={f.link} style="color:inherit">
+            <div class="ico">{f.ico}</div>
+            <h3>{f.title}</h3>
+            <p>{f.desc}</p>
+            <span class="more">Learn more </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-head">
+      <h2>Latest notes</h2>
+      <a href="/notes/">All </a>
+    </div>
+    {
+      notes.length > 0 ? (
+        <div class="post-list">
+          {notes.map((n) => (
+            <a class="post-row" href={n.url} style="color:inherit">
+              <span class="title">{n.title}</span>
+              <span class="meta">{n.date}</span>
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p style="color:var(--text-faint)">
+          No notes yet. Add an <code>.mdx</code> file under <code>src/pages/notes/</code> and it will appear here.
+        </p>
+      )
+    }
+  </section>
+
+  <section class="section">
+    <div class="section-head"><h2>Try it: Python in your browser</h2></div>
+    <p style="color:var(--text-soft);max-width:64ch">
+      The code block below runs Python <strong>in your browser</strong> (Pyodide / WebAssembly),
+      with no server involved. Edit the code and hit <strong>Run</strong>.
+    </p>
+    <PyodideRunner
+      title="Damped sine wave"
+      code={`import numpy as np
+import matplotlib.pyplot as plt
+
+x = np.linspace(0, 4 * np.pi, 300)
+y = np.sin(x) / (1 + 0.15 * x)
+
+plt.figure(figsize=(6, 3.2))
+plt.plot(x, y, color="#06b6d4", linewidth=2.2, label="sin(x)/(1+0.15x)")
+plt.fill_between(x, y, alpha=0.12, color="#06b6d4")
+plt.title("Damped oscillation")
+plt.xlabel("x"); plt.ylabel("y")
+plt.legend(); plt.grid(alpha=0.3)
+print("integral ~", round(float(np.trapz(y, x)), 4))`}
+    />
+  </section>
+</Base>

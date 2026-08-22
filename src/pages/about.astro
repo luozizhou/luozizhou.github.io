@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="About  Notes & Code" description="About this site: what it is and how it is built">
+  <div class="page-head">
+    <h1>About this site</h1>
+    <p>A small, content-first website for sharing notes, data-analysis experiments, and interactive code.</p>
+  </div>
+
+  <div class="prose">
+    <p>
+      This site is a place to publish written notes, runnable Python examples, and photo galleries.
+      Everything is static and runs in the browser  no backend, no tracking, no personal data collected.
+    </p>
+
+    <h2>What's inside</h2>
+    <ul>
+      <li><strong>Notes</strong>: reading notes and short technical write-ups (Markdown / MDX).</li>
+      <li><strong>Analysis</strong>: Python runs directly in your browser via Pyodide (WebAssembly)  numpy and matplotlib included.</li>
+      <li><strong>Docs</strong>: longer tutorial-style pieces.</li>
+      <li><strong>Photos</strong>: a lightweight gallery with click-to-zoom.</li>
+    </ul>
+
+    <h2>How it's built</h2>
+    <p>
+      Built with <a href="https://astro.build" target="_blank" rel="noopener">Astro</a> (static output),
+      <a href="https://docs.astro.build/en/guides/integrations-guide/mdx/" target="_blank" rel="noopener">MDX</a> for content,
+      and <a href="https://pyodide.org" target="_blank" rel="noopener">Pyodide</a> for in-browser Python.
+      Deployed to GitHub Pages via GitHub Actions.
+    </p>
+
+    <blockquote>
+      This page describes the site only. No personal information is collected or displayed.
+    </blockquote>
+  </div>
+</Base>
